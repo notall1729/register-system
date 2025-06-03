@@ -1,15 +1,17 @@
 package aut.ap;
-import jakarta.transaction.UserTransaction;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import java.util.Scanner;
 
 public class Main {
-    public static Scanner scanner = new Scanner(System.in);
+    private static Scanner scanner = new Scanner(System.in);
+    private static SessionFactory sessionFactory;
 
     public static void main(String[] args) {
-
+            System.out.println("Welcome to our system!");
             System.out.println("[L]ogin, [S]ign up");
             String command = scanner.nextLine();
 
@@ -20,17 +22,42 @@ public class Main {
                 signUp();
             }
             else {
-                System.out.println("Please try again.");
+                System.out.println("Invalid choice. please try again.");
             }
 
     }
 
     public static void login(){
+        System.out.println("----------------Log in-----------------");
 
+        System.out.println("Email: ");
+        String email = scanner.nextLine();
+
+        System.out.println("Password: ");
+        String password = scanner.nextLine();
+
+        try (Session session = sessionFactory.openSession()){
+            Query<User> query = session.createQuery("from users where email = :email and password = : password", User.class);
+            query.setParameter("email", email);
+            query.setParameter("password", password);
+
+            User user = query.uniqueResult();
+
+            if (user != null){
+                System.out.println("Welcome, " + user.getFirstName() + " " + user.getLastName() + "!");
+            }
+            else {
+                System.out.println("Invalid email or password");
+            }
+
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     public static void signUp(){
         User user;
+        System.out.println("---------------Sign up-----------------");
         System.out.print("First name: ");
         String firstName = scanner.nextLine();
 
@@ -50,5 +77,29 @@ public class Main {
             signUp();
         }
 
+        try(Session session = sessionFactory.openSession()){
+            Query<User> query = session.createQuery("from users where email = : email", User.class);
+            query.setParameter("email", email);
+            User existingUser = query.uniqueResult();
+
+            if (existingUser != null){
+                System.out.println("An account with this email already exists.");
+                return;
+            }
+
+            user = new User(firstName, lastName, age, email, password);
+
+            Transaction transaction = session.beginTransaction();
+            session.save(user);
+            transaction.commit();
+
+            System.out.println("successful Registration!");
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+
+
     }
+
+
 }
