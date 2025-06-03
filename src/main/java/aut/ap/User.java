@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CurrentTimestamp;
 
 @Entity
-@Table(name = "users")
+@Table(name = "User")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
